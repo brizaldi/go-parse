@@ -33,17 +33,17 @@ var jsonTests = []struct {
 	{name: "wrong header", json: `{"foo": "bar"}`, errorExpected: true, maxSize: 1024, allowUnknown: false, contentType: "application/xml"},
 }
 
-func TestParser_ReadJson(t *testing.T) {
+func TestParser_ReadJSON(t *testing.T) {
 	for _, e := range jsonTests {
 		var testParser Parser
 		// set max file size
-		testParser.MaxJsonSize = e.maxSize
+		testParser.MaxJSONSize = e.maxSize
 
 		// allow/disallow unknown fields.
 		testParser.AllowUnknownFields = e.allowUnknown
 
 		// declare a variable to read the decoded json into.
-		var decodedJson struct {
+		var decodedJSON struct {
 			Foo string `json:"foo"`
 		}
 
@@ -62,8 +62,8 @@ func TestParser_ReadJson(t *testing.T) {
 		// for a ResponseWriter.
 		rr := httptest.NewRecorder()
 
-		// call ReadJson and check for an error.
-		err = testParser.ReadJson(rr, req, &decodedJson)
+		// call ReadJSON and check for an error.
+		err = testParser.ReadJSON(rr, req, &decodedJSON)
 
 		// if we expect an error, but do not get one, something went wrong.
 		if e.errorExpected && err == nil {
@@ -78,7 +78,7 @@ func TestParser_ReadJson(t *testing.T) {
 	}
 }
 
-func TestParser_ReadJsonAndMarshal(t *testing.T) {
+func TestParser_ReadJSONAndMarshal(t *testing.T) {
 	// set max file size
 	var testParser Parser
 
@@ -92,9 +92,9 @@ func TestParser_ReadJsonAndMarshal(t *testing.T) {
 	// for a ResponseWriter
 	rr := httptest.NewRecorder()
 
-	// call ReadJson and check for an error; since we are using nil for the final parameter,
+	// call ReadJSON and check for an error; since we are using nil for the final parameter,
 	// we should get an error
-	err = testParser.ReadJson(rr, req, nil)
+	err = testParser.ReadJSON(rr, req, nil)
 
 	// we expect an error, but did not get one, so something went wrong
 	if err == nil {
@@ -104,14 +104,14 @@ func TestParser_ReadJsonAndMarshal(t *testing.T) {
 	req.Body.Close()
 }
 
-var WriteJsonTests = []struct {
+var WriteJSONTests = []struct {
 	name          string
 	payload       any
 	errorExpected bool
 }{
 	{
 		name: "valid",
-		payload: JsonResponse{
+		payload: JSONResponse{
 			Error:   false,
 			Message: "foo",
 		},
@@ -124,8 +124,8 @@ var WriteJsonTests = []struct {
 	},
 }
 
-func TestParser_WriteJson(t *testing.T) {
-	for _, e := range WriteJsonTests {
+func TestParser_WriteJSON(t *testing.T) {
+	for _, e := range WriteJSONTests {
 		// create a variable of type ps.Parser, and just use the defaults.
 		var testParser Parser
 
@@ -133,7 +133,7 @@ func TestParser_WriteJson(t *testing.T) {
 
 		headers := make(http.Header)
 		headers.Add("FOO", "BAR")
-		err := testParser.WriteJson(rr, http.StatusOK, e.payload, headers)
+		err := testParser.WriteJSON(rr, http.StatusOK, e.payload, headers)
 		if err == nil && e.errorExpected {
 			t.Errorf("%s: expected error, but did not get one", e.name)
 		}
@@ -143,24 +143,24 @@ func TestParser_WriteJson(t *testing.T) {
 	}
 }
 
-func TestParser_ErrorJson(t *testing.T) {
+func TestParser_ErrorJSON(t *testing.T) {
 	var testParser Parser
 
 	rr := httptest.NewRecorder()
-	err := testParser.ErrorJson(rr, errors.New("some error"), http.StatusServiceUnavailable)
+	err := testParser.ErrorJSON(rr, errors.New("some error"), http.StatusServiceUnavailable)
 	if err != nil {
 		t.Error(err)
 	}
 
-	var requestPayload JsonResponse
+	var requestPayload JSONResponse
 	decoder := json.NewDecoder(rr.Body)
 	err = decoder.Decode(&requestPayload)
 	if err != nil {
-		t.Error("received error when decoding ErrorJson payload:", err)
+		t.Error("received error when decoding ErrorJSON payload:", err)
 	}
 
 	if !requestPayload.Error {
-		t.Error("error set to false in response from ErrorJson, and should be set to true")
+		t.Error("error set to false in response from ErrorJSON, and should be set to true")
 	}
 
 	if rr.Code != http.StatusServiceUnavailable {
